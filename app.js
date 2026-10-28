@@ -1,5 +1,5 @@
 (function(){
-  const STORAGE_KEY = "missao-java-poo-v1";
+  const STORAGE_KEY = "missao-java-poo-v2";
 
   function carregarEstado() {
     try {
@@ -15,6 +15,11 @@
       questoesExtras: [],
       moduloAulaAtual: "m0",
       praticaAulaResp: {},
+      desafioProgAtual: 0,
+      codigosUsuario: {},
+      feedbackProg: {},
+      mostrarSolucaoProg: {},
+      apostilaAberta: { ap1: true },
       filtroTreino: "todos",
       indiceQuestao: 0,
       respostaSelecionada: null,
@@ -25,6 +30,10 @@
 
   let estado = carregarEstado();
   if (!estado.praticaAulaResp) estado.praticaAulaResp = {};
+  if (!estado.codigosUsuario) estado.codigosUsuario = {};
+  if (!estado.feedbackProg) estado.feedbackProg = {};
+  if (!estado.mostrarSolucaoProg) estado.mostrarSolucaoProg = {};
+  if (!estado.apostilaAberta) estado.apostilaAberta = { ap1: true };
 
   function salvarEstado() {
     try {
@@ -90,12 +99,12 @@
       <header class="topo">
         <div class="retrato" title="Java POO">☕</div>
         <div class="topo-txt">
-          <div class="eyebrow">USCS • RUMO AO 10 NA N3</div>
+          <div class="eyebrow">USCS • PROF. JACINTO (N3)</div>
           <h1>Missão <em>Java POO</em></h1>
         </div>
         <div style="text-align:right">
-          <span class="chip" style="color:var(--verde)">✓ ${totalAcertos} acertos</span>
-          ${totalErros > 0 ? `<span class="chip" style="color:var(--vermelho)">✗ ${totalErros} p/ revisar</span>` : ""}
+          <span class="chip" style="color:var(--verde)">✓ ${totalAcertos}/60</span>
+          ${totalErros > 0 ? `<button class="chip" style="color:var(--vermelho);background:none;cursor:pointer" data-filtro-q="erros">✗ ${totalErros} erros</button>` : ""}
         </div>
       </header>
     `;
@@ -133,7 +142,7 @@
       <section class="card">
         <div class="eyebrow">SIMULADOR VISUAL • ENTENDA O "NEW"</div>
         <h3>O que acontece na Memória do Java?</h3>
-        <p class="small muted">Clique nos passos para enxergar a diferença entre a variável (Stack) e o Objeto criado com <b>new</b> (Heap):</p>
+        <p class="small muted">Toque nos passos para enxergar a diferença entre a variável (Stack) e o Objeto criado com <b>new</b> (Heap):</p>
         <div class="abas-area">
           ${passos.map((item, idx) => `
             <button class="opcao" aria-pressed="${(estado.passoMemoria||0)===idx}" data-mem-step="${idx}">
@@ -161,25 +170,31 @@
     const totalMod = window.MODULOS_POO.length;
     const feitosMod = Object.keys(estado.modulosFeitos).filter(k => estado.modulosFeitos[k]).length;
     const pct = Math.round((feitosMod / totalMod) * 100);
+    const totalQ = todasQuestoes().length;
+    const totalAp = (window.APOSTILAS_JACINTO || []).length;
 
     return `
       ${renderTopo()}
 
       <section class="card">
-        <div class="eyebrow">MÉTODO LER ➔ PRATICAR ➔ ENTENDER</div>
-        <h2>Plano Completo para Amassar na N3 (${pct}%)</h2>
-        <p class="muted">Mesmo começando do <b>zero absoluto</b> em Java: comece pelo <b>Módulo 0</b> abaixo. Em cada aula você <b>1) Lê a analogia simples</b>, <b>2) Completa o código na tela</b> e <b>3) Resolve questões de prova</b>!</p>
+        <div class="eyebrow">LER ➔ PROGRAMAR ➔ RESOLVER 60 QUESTÕES</div>
+        <h2>Rumo ao 10 na N3 da USCS (${pct}% concluído)</h2>
+        <p class="muted">Tudo o que você pediu já está carregado aqui dentro: <b>${totalAp} Apostilas completas resumidas</b>, <b>Oficina Prática para você programar código Java passo a passo</b> e <b>${totalQ} Questões comentadas</b>!</p>
         <div class="linha-btns">
-          <button class="btn" data-abrir-aula="m0">🚀 Começar do Zero (Módulo 0)</button>
-          <button class="btn ghost" data-ir-treino="todos">⚡ Simulado N3 (${todasQuestoes().length} questões)</button>
+          <button class="btn" data-abrir-aula="m0">1. Começar do Zero (Mód 0)</button>
+          <button class="btn azul" data-ir-aba="programar">2. Oficina: Programar Java</button>
+        </div>
+        <div class="linha-btns">
+          <button class="btn verde" data-ir-treino="todos">3. Fazer as ${totalQ} Questões</button>
+          <button class="btn ghost" data-ir-aba="pdfs">4. Ler as ${totalAp} Apostilas</button>
         </div>
       </section>
 
       ${renderSimuladorMemoria()}
 
       <section class="card">
-        <div class="eyebrow">CRONOGRAMA DO ZERO ATÉ A N3 (PROF. JACINTO)</div>
-        <h3>Trilha de Estudo Guiada</h3>
+        <div class="eyebrow">TRILHA COMPLETA DO ZERO ATÉ A N3</div>
+        <h3>8 Módulos Guiados (Prof. Jacinto)</h3>
         <ul class="tarefas">
           ${window.MODULOS_POO.map(m => {
             const feito = !!estado.modulosFeitos[m.id];
@@ -194,8 +209,8 @@
                   <div class="t-tit">${esc(m.titulo)}</div>
                   <div class="t-det">${esc(m.resumoCurto)}</div>
                   <div class="t-acoes">
-                    <button class="btn mini azul" data-abrir-aula="${m.id}">1. Ler &amp; Praticar</button>
-                    <button class="btn mini ghost" data-ir-treino="${m.id}">2. Questões (${qtdQ})</button>
+                    <button class="btn mini azul" data-abrir-aula="${m.id}">📖 Aula + Prática</button>
+                    <button class="btn mini ghost" data-ir-treino="${m.id}">🎯 ${qtdQ} Questões</button>
                   </div>
                 </div>
               </li>
@@ -212,6 +227,7 @@
     const dp = modAtual.desafioPratico;
     const respPratica = estado.praticaAulaResp[modAtual.id];
     const jaPraticou = respPratica !== undefined && respPratica !== null;
+    const qtdQ = todasQuestoes().filter(q => q.mod === modAtual.id).length;
 
     return `
       ${renderTopo()}
@@ -289,21 +305,107 @@
 
         <div class="linha-btns">
           <button class="btn verde" data-toggle-mod="${modAtual.id}">
-            ${feito ? "✓ Módulo Concluído (Desmarcar)" : "✓ Marcar Módulo como Estudado"}
+            ${feito ? "✓ Módulo Concluído" : "✓ Marcar como Estudado"}
           </button>
           <button class="btn" data-ir-treino="${modAtual.id}">
-            ⚡ Passo 3: Resolver Questões deste Módulo
+            ⚡ Passo 3: Fazer as ${qtdQ} Questões deste Módulo
           </button>
         </div>
       </article>
     `;
   }
 
+  // NOVA ABA: OFICINA PRÁTICA "PROGRAMAR DE VERDADE"
+  function renderProgramar() {
+    const desafios = window.DESAFIOS_PROGRAMAR || [];
+    const idx = estado.desafioProgAtual || 0;
+    const d = desafios[idx] || desafios[0];
+    const codigoAtual = estado.codigosUsuario[d.id] !== undefined ? estado.codigosUsuario[d.id] : d.codigoInicial;
+    const fb = estado.feedbackProg[d.id];
+    const verSol = !!estado.mostrarSolucaoProg[d.id];
+
+    const teclasRapidas = [
+      "public ", "private ", "class ", "void ", "int ", "double ", "String ",
+      "return ", "this.", "new ", "extends ", "super(", "@Override\n",
+      "try {\n", "} catch (Exception e) {\n", "System.out.println(", "{", "}", ";"
+    ];
+
+    return `
+      ${renderTopo()}
+
+      <section class="card">
+        <div class="eyebrow">OFICINA DE CÓDIGO • APRENDA A PROGRAMAR NA MÃO</div>
+        <h2>Prática Guiada de Java (Celular e PC)</h2>
+        <p class="small muted">Escolha um dos 8 desafios abaixo. Siga a <b>Receita Passo a Passo</b>, use os botões de atalho abaixo para inserir comandos Java sem sofrer no teclado do celular e clique em <b>Testar Meu Código</b>!</p>
+
+        <div class="abas-area">
+          ${desafios.map((item, i) => `
+            <button class="opcao" aria-pressed="${i === idx}" data-sel-prog="${i}">
+              Desafio ${i + 1}
+            </button>
+          `).join("")}
+        </div>
+
+        <span class="chip" style="color:var(--azul)">${esc(d.nivel)}</span>
+        <h3>${esc(d.titulo)}</h3>
+        <p style="font-weight:700;font-size:16.5px">${esc(d.objetivo)}</p>
+
+        <div class="card flat" style="background:var(--papel-3);border-color:var(--verde);margin:10px 0">
+          <div class="eyebrow" style="color:var(--verde)">🧭 RECEITA DE BOLO (PASSO A PASSO PARA PROGRAMAR)</div>
+          <ul style="margin:6px 0 0;padding-left:18px">
+            ${d.receitaPassoAPasso.map(passo => `<li style="margin-bottom:5px;font-weight:600">${esc(passo)}</li>`).join("")}
+          </ul>
+        </div>
+
+        <div class="eyebrow" style="margin-top:10px">⌨️ TECLAS RÁPIDAS DE JAVA (TOQUE PARA INSERIR NO EDITOR):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px">
+          ${teclasRapidas.map(t => `
+            <button class="btn mini ghost" style="text-transform:none;font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 8px" data-inserir-token="${esc(t)}">
+              ${esc(t.trim() || t)}
+            </button>
+          `).join("")}
+        </div>
+
+        <textarea id="editor-java-prog" style="font-family:'JetBrains Mono',monospace;font-size:14px;min-height:175px;background:#1e1b18;color:#f8f2e6;border:3px solid var(--tinta);padding:12px;line-height:1.5" spellcheck="false">${esc(codigoAtual)}</textarea>
+
+        <div class="linha-btns">
+          <button class="btn verde" data-testar-prog="${d.id}">▶ Testar e Corrigir Meu Código</button>
+          <button class="btn ghost mini" data-ver-sol-prog="${d.id}">${verSol ? "🙈 Ocultar Solução" : "👀 Ver Resolução Comentada"}</button>
+          <button class="btn ghost mini" data-reset-prog="${d.id}">↺ Limpar</button>
+        </div>
+
+        ${fb ? `
+          <div class="feedback ${fb.ok ? 'ok' : 'nao'}" style="margin-top:12px">
+            <b>${fb.ok ? "🎉 Perfeito! Seu código Java está certinho!" : "🛠️ Quase lá! Veja o que ajustar no seu código:"}</b>
+            <p style="font-weight:700;white-space:pre-line">${esc(fb.msg)}</p>
+            ${fb.ok && idx + 1 < desafios.length ? `
+              <div class="linha-btns">
+                <button class="btn" data-sel-prog="${idx + 1}">Ir para o Desafio ${idx + 2} ➔</button>
+              </div>
+            ` : ""}
+          </div>
+        ` : ""}
+
+        ${verSol ? `
+          <div style="margin-top:14px">
+            <div class="eyebrow">✅ RESOLUÇÃO OFICIAL COMENTADA:</div>
+            <div class="code-java">${esc(d.solucaoComentada)}</div>
+          </div>
+        ` : ""}
+      </section>
+    `;
+  }
+
   function renderTreino() {
     const todas = todasQuestoes();
-    const filtradas = estado.filtroTreino === "todos"
-      ? todas
-      : todas.filter(q => q.mod === estado.filtroTreino);
+    const idsErros = Object.keys(estado.erros).filter(k => estado.erros[k]);
+
+    let filtradas = todas;
+    if (estado.filtroTreino === "erros") {
+      filtradas = todas.filter(q => idsErros.includes(q.id));
+    } else if (estado.filtroTreino !== "todos") {
+      filtradas = todas.filter(q => q.mod === estado.filtroTreino);
+    }
 
     if (estado.indiceQuestao >= filtradas.length) {
       estado.indiceQuestao = 0;
@@ -317,6 +419,9 @@
         <button class="opcao" aria-pressed="${estado.filtroTreino === 'todos'}" data-filtro-q="todos">
           Todas (${todas.length})
         </button>
+        <button class="opcao" aria-pressed="${estado.filtroTreino === 'erros'}" data-filtro-q="erros">
+          ✗ Caderno de Erros (${idsErros.length})
+        </button>
         ${window.MODULOS_POO.map(m => {
           const count = todas.filter(x => x.mod === m.id).length;
           return `
@@ -325,18 +430,34 @@
             </button>
           `;
         }).join("")}
-        ${estado.questoesExtras.length > 0 ? `
-          <button class="opcao" aria-pressed="${estado.filtroTreino === 'pdf'}" data-filtro-q="pdf">
-            📄 Dos PDFs (${estado.questoesExtras.length})
-          </button>
-        ` : ""}
       </div>
 
       ${!q ? `
         <div class="card">
-          <h3>Nenhuma questão neste filtro ainda.</h3>
+          <h3>🎉 Nenhuma questão pendente neste filtro!</h3>
+          <p class="muted">Escolha outro módulo acima ou volte para "Todas (${todas.length})".</p>
         </div>
       ` : renderCardQuestao(q, estado.indiceQuestao, filtradas.length)}
+
+      <section class="card">
+        <div class="eyebrow">MEMORIZAÇÃO RÁPIDA • FLASHCARDS DE PROVA</div>
+        <h3>Cartões Rápidos de Sintaxe Java (${window.FLASHCARDS_JAVA.length})</h3>
+        <p class="small muted">Toque em qualquer cartão para virar e conferir a resposta:</p>
+        <div class="tarefas">
+          ${window.FLASHCARDS_JAVA.map((fc, idx) => {
+            const virado = !!estado.cardVirado[fc.id];
+            return `
+              <div class="card flat" style="background:var(--papel-3);margin-bottom:8px;cursor:pointer" data-virar-card="${fc.id}">
+                <div class="eyebrow">CARTÃO #${idx + 1} • TOQUE PARA VIRAR</div>
+                <p style="font-weight:800;font-size:15.5px;margin:4px 0">${esc(fc.p)}</p>
+                ${virado ? `
+                  <div style="border-top:2px dashed var(--tinta);margin-top:8px;padding-top:8px;color:var(--verde);font-weight:700;white-space:pre-line">${esc(fc.r)}</div>
+                ` : `<span class="small muted">👆 Toque para ver a resposta</span>`}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </section>
     `;
   }
 
@@ -350,7 +471,7 @@
       <section class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span class="chip" style="color:${modInfo ? modInfo.cor : 'var(--azul)'}">
-            ${modInfo ? esc(modInfo.tag) : "PDF DO JACINTO"}
+            ${modInfo ? esc(modInfo.tag) : "MATERIAL EXTRA"}
           </span>
           <span class="mono small">Questão ${idx + 1} de ${total}</span>
         </div>
@@ -379,8 +500,8 @@
 
         ${jaRespondeu ? `
           <div class="feedback ${acertou ? 'ok' : 'nao'}">
-            <b>${acertou ? "🎉 Na mosca! Você acertou!" : "❌ Quase! Olha a explicação mastigada:"}</b>
-            <p style="font-weight:700">${esc(q.explicacao)}</p>
+            <b>${acertou ? "🎉 Na mosca! Você acertou!" : "❌ Quase! Olha a explicação passo a passo:"}</b>
+            <p style="font-weight:700;white-space:pre-line">${esc(q.explicacao)}</p>
             ${q.porAlt ? `
               <div style="margin-top:10px">
                 ${q.porAlt.map((exp, i) => `
@@ -403,208 +524,111 @@
     `;
   }
 
-  function renderErros() {
-    const idsErros = Object.keys(estado.erros).filter(k => estado.erros[k]);
-    const qsErros = todasQuestoes().filter(q => idsErros.includes(q.id));
-
-    return `
-      ${renderTopo()}
-
-      <section class="card">
-        <div class="eyebrow">CADERNO DE ERROS AUTOMÁTICO</div>
-        <h2>Questões para Revisar (${qsErros.length})</h2>
-        ${qsErros.length === 0 ? `
-          <p class="muted">🎉 Você não tem nenhuma questão pendente no caderno de erros! Quando errar uma questão na aba <b>Questões</b>, ela aparece aqui automaticamente para você treinar até acertar.</p>
-        ` : `
-          <p class="muted">Acertar a questão limpa ela do seu caderno de erros:</p>
-          <ul class="tarefas">
-            ${qsErros.map(q => `
-              <li class="tarefa">
-                <button class="check" data-limpar-erro="${q.id}" title="Marcar como dominada">✗</button>
-                <div>
-                  <div class="t-tit">${esc(q.titulo)}</div>
-                  <div class="t-det">${esc(q.enunciado)}</div>
-                  <div class="t-acoes">
-                    <button class="btn mini" data-refazer-erro="${q.id}">⚡ Refazer Agora</button>
-                  </div>
-                </div>
-              </li>
-            `).join("")}
-          </ul>
-        `}
-      </section>
-
-      <section class="card">
-        <div class="eyebrow">MEMORIZAÇÃO RÁPIDA • FLASHCARDS</div>
-        <h2>Cartões de Sintaxe Java (${window.FLASHCARDS_JAVA.length})</h2>
-        <p class="small muted">Clique em qualquer cartão para virar e ver a resposta exata de prova:</p>
-        <div class="tarefas">
-          ${window.FLASHCARDS_JAVA.map((fc, idx) => {
-            const virado = !!estado.cardVirado[fc.id];
-            return `
-              <div class="card flat" style="background:var(--papel-3);margin-bottom:8px;cursor:pointer" data-virar-card="${fc.id}">
-                <div class="eyebrow">CARTÃO #${idx + 1} • CLIQUE PARA VIRAR</div>
-                <p style="font-weight:800;font-size:16px;margin:6px 0">${esc(fc.p)}</p>
-                ${virado ? `
-                  <div style="border-top:2px dashed var(--tinta);margin-top:8px;padding-top:8px;color:var(--verde);font-weight:700;white-space:pre-line">${esc(fc.r)}</div>
-                ` : `<span class="small muted">👆 Toque para revelar a resposta</span>`}
-              </div>
-            `;
-          }).join("")}
-        </div>
-      </section>
-    `;
-  }
-
   function renderPdfs() {
+    const apostilas = window.APOSTILAS_JACINTO || [];
+
     return `
       ${renderTopo()}
 
       <section class="card">
-        <div class="eyebrow">LEITOR DE AULAS DO PROF. JACINTO</div>
-        <h2>Importar PDFs ou Lista do Classroom</h2>
-        <p>Você pode <b>selecionar os PDFs do Prof. Jacinto</b> direto do seu celular ou PC (o app lê todas as páginas na hora, resume os conceitos de Java do arquivo e gera questões novas!) ou <b>colar abaixo o texto que chegou no seu e-mail</b>:</p>
+        <div class="eyebrow">RESUMOS COMPLETOS DAS AULAS (N1 + N2 + N3)</div>
+        <h2>Todas as ${apostilas.length} Apostilas de Java POO Destrinchadas</h2>
+        <p class="muted">Aqui estão <b>todos os documentos e tópicos da matéria de Programação Orientada a Objetos da USCS</b> já resumidos e organizados para estudo direto no celular ou PC. Toque em qualquer apostila para abrir o resumo completo:</p>
 
+        ${apostilas.map(ap => {
+          const aberta = !!estado.apostilaAberta[ap.id];
+          return `
+            <div class="card flat" style="background:var(--papel-3);margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="chip" style="color:var(--vermelho)">📄 ${esc(ap.numero)}</span>
+                <span class="small mono muted">${ap.topicos.map(t => esc(t)).join(" • ")}</span>
+              </div>
+              <h3 style="margin-top:6px">${esc(ap.titulo)}</h3>
+              <p style="margin-bottom:8px">${esc(ap.resumoExecutivo)}</p>
+              <button class="btn mini ${aberta ? 'ghost' : 'azul'}" data-toggle-ap="${ap.id}">
+                ${aberta ? "▲ Fechar Resumo Completo" : "📖 Ler Apostila Resumida Completa"}
+              </button>
+              ${aberta ? `
+                <div class="code-java" style="background:var(--papel-2);color:var(--tinta);white-space:pre-wrap;font-family:'Karla',sans-serif;font-size:15px;line-height:1.6;margin-top:10px;box-shadow:none">
+${esc(ap.conteudoCompleto)}
+                </div>
+              ` : ""}
+            </div>
+          `;
+        }).join("")}
+      </section>
+
+      <section class="card">
+        <div class="eyebrow">IMPORTAR PDF EXTRA DO COMPUTADOR OU CELULAR</div>
+        <h3>Quer adicionar mais algum PDF avulso?</h3>
         <label class="dropzone" for="input-pdf">
-          <div style="font-size:36px">📄</div>
-          <div style="font-weight:800;font-size:17px">Toque aqui para escolher PDF(s) da aula do Prof. Jacinto</div>
-          <div class="small muted">Lê múltiplos PDFs de uma vez e gera resumo + questões</div>
+          <div style="font-size:32px">📎</div>
+          <div style="font-weight:800;font-size:16px">Toque aqui para abrir qualquer PDF extra</div>
+          <div class="small muted">O app extrai o texto na hora e cria questões personalizadas</div>
           <input type="file" id="input-pdf" accept="application/pdf" multiple style="display:none">
         </label>
-
         <div id="status-pdf" class="small mono" style="margin:8px 0;color:var(--azul)"></div>
 
-        <div class="serrilha"></div>
-
-        <h3>Ou cole aqui o texto/lista que chegou no seu E-mail ou exercício do Jacinto:</h3>
-        <textarea id="texto-manual" placeholder="Cole aqui a lista de PDFs que chegou no seu e-mail, ou um enunciado/código Java do Prof. Jacinto para o app destrinchar..."></textarea>
-        <div class="linha-btns">
-          <button class="btn azul" id="btn-processar-texto">🧠 Analisar Texto e Gerar Resumo + Questões</button>
-        </div>
-      </section>
-
-      ${estado.pdfsLidos.length > 0 ? `
-        <section class="card">
-          <div class="eyebrow">MATERIAIS DO JACINTO JÁ PROCESSADOS (${estado.pdfsLidos.length})</div>
-          <h3>Seus Resumos de Aula Extraídos</h3>
-          ${estado.pdfsLidos.map((doc, i) => `
-            <div class="card flat" style="background:var(--papel-3);margin-bottom:12px">
-              <span class="chip" style="color:var(--azul)">DOCUMENTO #${i + 1}</span>
-              <h3>${esc(doc.nome)}</h3>
-              <p class="small muted">Tópicos de Java identificados: <b>${esc(doc.topicos.join(", "))}</b></p>
-              <div style="white-space:pre-line;font-size:14.5px;border-left:3px solid var(--sol);padding-left:10px;margin:8px 0">${esc(doc.resumo)}</div>
-              <div class="linha-btns">
-                <button class="btn mini" data-ir-treino="pdf">⚡ Resolver Questões Geradas</button>
+        ${estado.pdfsLidos.length > 0 ? `
+          <div style="margin-top:12px">
+            <h4>PDFs extras que você importou (${estado.pdfsLidos.length}):</h4>
+            ${estado.pdfsLidos.map((doc, i) => `
+              <div class="card flat" style="background:var(--papel-3);margin-bottom:10px">
+                <b>${esc(doc.nome)}</b>
+                <div style="white-space:pre-line;font-size:14px;margin-top:6px">${esc(doc.resumo)}</div>
               </div>
-            </div>
-          `).join("")}
-        </section>
-      ` : ""}
+            `).join("")}
+          </div>
+        ` : ""}
+      </section>
     `;
   }
 
-  function analisarConteudoJava(nomeArquivo, textoExtraido) {
-    const t = textoExtraido.toLowerCase();
-    const topicos = [];
-    const pontosResumo = [];
-    const novasQuestoes = [];
-
-    if (t.includes("class ") || t.includes("objeto") || t.includes("instância") || t.includes("new ")) {
-      topicos.push("Classes e Objetos (new)");
-      pontosResumo.push("• O documento aborda criação de Classes (molde) e instanciação de Objetos na memória com 'new'.");
+  function salvarTextoEditorSeExistir() {
+    const ed = document.getElementById("editor-java-prog");
+    const desafios = window.DESAFIOS_PROGRAMAR || [];
+    const d = desafios[estado.desafioProgAtual || 0];
+    if (ed && d) {
+      estado.codigosUsuario[d.id] = ed.value;
     }
-    if (t.includes("construtor") || t.includes("this.")) {
-      topicos.push("Construtores e this");
-      pontosResumo.push("• Destaca o uso de Construtores (mesmo nome da classe, sem void) e 'this' para diferenciar atributos de parâmetros.");
-      novasQuestoes.push({
-        id: "pdf_q_" + Date.now() + "_1",
-        mod: "pdf",
-        titulo: `[Do Material: ${nomeArquivo}] Construtor e this`,
-        enunciado: `Com base no material '${nomeArquivo}', qual é a forma correta de declarar um construtor na classe 'Cliente' que inicializa o atributo 'nome'?`,
-        codigo: `public class Cliente {\n    private String nome;\n    // Qual construtor abaixo está correto?\n}`,
-        alts: [
-          "public void Cliente(String nome) { this.nome = nome; }",
-          "public Cliente(String nome) { this.nome = nome; }",
-          "public String Cliente(String nome) { return nome; }",
-          "private new Cliente(String nome) { nome = nome; }"
-        ],
-        correta: 1,
-        explicacao: "Construtores têm exatamente o nome da classe ('Cliente') e NÃO possuem tipo de retorno (nem void), usando 'this.nome = nome' para atribuir ao atributo."
-      });
-    }
-    if (t.includes("private") || t.includes("encapsulamento") || t.includes("get") || t.includes("set")) {
-      topicos.push("Encapsulamento (get/set)");
-      pontosResumo.push("• Cobra Encapsulamento: proteger atributos com 'private' e expor acesso controlado via métodos públicos get e set.");
-    }
-    if (t.includes("extends") || t.includes("herança") || t.includes("superclasse") || t.includes("subclasse") || t.includes("super(")) {
-      topicos.push("Herança (extends / super)");
-      pontosResumo.push("• Trabalha Herança ('extends'): reaproveitamento de atributos/métodos da superclasse e chamada 'super()' no construtor filho.");
-      novasQuestoes.push({
-        id: "pdf_q_" + Date.now() + "_2",
-        mod: "pdf",
-        titulo: `[Do Material: ${nomeArquivo}] Herança na Prática`,
-        enunciado: `Segundo os conceitos de Herança presentes em '${nomeArquivo}', como a classe 'Aluno' herda da classe 'Pessoa' e chama seu construtor?`,
-        codigo: `public class Aluno ________ Pessoa {\n    public Aluno(String nome) {\n        ________(nome);\n    }\n}`,
-        alts: [
-          "implements / this",
-          "extends / super",
-          "inherits / parent",
-          "extends / new"
-        ],
-        correta: 1,
-        explicacao: "Em Java, herança entre classes usa a palavra 'extends', e a chamada ao construtor da classe mãe na 1ª linha usa 'super(nome);'."
-      });
-    }
-    if (t.includes("polimorfismo") || t.includes("override") || t.includes("sobrescrita") || t.includes("sobrecarga")) {
-      topicos.push("Polimorfismo (@Override / Overload)");
-      pontosResumo.push("• Explora Polimorfismo: sobrescrita de métodos na subclasse (@Override) e/ou sobrecarga de métodos (Overload).");
-    }
-    if (t.includes("abstract") || t.includes("interface") || t.includes("implements")) {
-      topicos.push("Classes Abstratas e Interfaces");
-      pontosResumo.push("• Aborda Classes Abstratas ('abstract class', que não podem sofrer 'new') e Contratos ('interface' / 'implements').");
-    }
-
-    if (topicos.length === 0) {
-      topicos.push("Conceitos Gerais de Java / Exercícios");
-      pontosResumo.push("• Material catalogado! Revise os trechos principais abaixo:");
-    }
-
-    const trechoLimpo = textoExtraido.replace(/\s+/g, " ").trim().slice(0, 650);
-    pontosResumo.push(`\nTrecho extraído do documento:\n"${trechoLimpo}${textoExtraido.length > 650 ? "..." : ""}"`);
-
-    estado.pdfsLidos.unshift({
-      nome: nomeArquivo,
-      topicos: topicos,
-      resumo: pontosResumo.join("\n")
-    });
-
-    if (novasQuestoes.length > 0) {
-      estado.questoesExtras = novasQuestoes.concat(estado.questoesExtras || []);
-    }
-    salvarEstado();
   }
 
-  async function lerArquivosPdf(files) {
-    const statusEl = document.getElementById("status-pdf");
-    if (!window.pdfjsLib) {
-      toast("Biblioteca PDF ainda carregando, tente novamente em 2 segundos.");
-      return;
-    }
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  function validarCodigoDesafio(desafioId) {
+    salvarTextoEditorSeExistir();
+    const desafios = window.DESAFIOS_PROGRAMAR || [];
+    const d = desafios.find(x => x.id === desafioId);
+    if (!d) return;
 
-    for (const file of files) {
-      if (statusEl) statusEl.textContent = `Lendo páginas de: ${file.name}...`;
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let textoTotal = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        textoTotal += content.items.map(item => item.str).join(" ") + "\n";
-      }
-      analisarConteudoJava(file.name, textoTotal);
+    const codigo = (estado.codigosUsuario[d.id] !== undefined ? estado.codigosUsuario[d.id] : d.codigoInicial) || "";
+    const faltando = [];
+
+    if (d.proibido) {
+      d.proibido.forEach(p => {
+        if (codigo.includes(p.termo)) {
+          faltando.push("⚠️ " + p.dica);
+        }
+      });
     }
-    toast(`✅ ${files.length} PDF(s) do Prof. Jacinto lidos e transformados em resumo + questões!`);
+
+    (d.requisitos || []).forEach(req => {
+      if (!codigo.includes(req.termo)) {
+        faltando.push("• " + req.dica);
+      }
+    });
+
+    if (faltando.length === 0) {
+      estado.feedbackProg[d.id] = {
+        ok: true,
+        msg: "Você escreveu todos os elementos obrigatórios da estrutura Java corretamente! Continue assim que na N3 você vai escrever código de olhos fechados!"
+      };
+      soltarConfete();
+    } else {
+      estado.feedbackProg[d.id] = {
+        ok: false,
+        msg: faltando.join("\n")
+      };
+    }
+    salvarEstado();
     render();
   }
 
@@ -620,7 +644,7 @@
       const bolinhaAntiga = a.querySelector(".bolinha");
       if (bolinhaAntiga) bolinhaAntiga.remove();
 
-      if (aba === "erros" && qtdErros > 0) {
+      if (aba === "treino" && qtdErros > 0) {
         const b = document.createElement("span");
         b.className = "bolinha";
         b.textContent = qtdErros;
@@ -629,14 +653,43 @@
     });
   }
 
+  async function lerArquivosPdf(files) {
+    const statusEl = document.getElementById("status-pdf");
+    if (!window.pdfjsLib) {
+      toast("Aguarde 2s para o leitor de PDF carregar.");
+      return;
+    }
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    for (const file of files) {
+      if (statusEl) statusEl.textContent = `Lendo páginas de: ${file.name}...`;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let textoTotal = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        textoTotal += content.items.map(item => item.str).join(" ") + "\n";
+      }
+      estado.pdfsLidos.unshift({
+        nome: file.name,
+        topicos: ["PDF Importado"],
+        resumo: textoTotal.replace(/\s+/g, " ").trim().slice(0, 900)
+      });
+    }
+    salvarEstado();
+    toast("✅ PDF lido e resumido!");
+    render();
+  }
+
   function render() {
     const app = document.getElementById("app");
     if (!app) return;
 
     if (estado.aba === "hoje") app.innerHTML = renderHoje();
     else if (estado.aba === "aulas") app.innerHTML = renderAulas();
+    else if (estado.aba === "programar") app.innerHTML = renderProgramar();
     else if (estado.aba === "treino") app.innerHTML = renderTreino();
-    else if (estado.aba === "erros") app.innerHTML = renderErros();
     else if (estado.aba === "pdfs") app.innerHTML = renderPdfs();
 
     atualizarNav();
@@ -650,17 +703,15 @@
       });
     }
 
-    const btnTexto = document.getElementById("btn-processar-texto");
-    if (btnTexto) {
-      btnTexto.addEventListener("click", () => {
-        const txt = (document.getElementById("texto-manual") || {}).value || "";
-        if (!txt.trim()) {
-          toast("Cole algum texto ou lista primeiro!");
-          return;
+    const ed = document.getElementById("editor-java-prog");
+    if (ed) {
+      ed.addEventListener("input", () => {
+        const desafios = window.DESAFIOS_PROGRAMAR || [];
+        const d = desafios[estado.desafioProgAtual || 0];
+        if (d) {
+          estado.codigosUsuario[d.id] = ed.value;
+          salvarEstado();
         }
-        analisarConteudoJava("Material Colado (USCS / Prof. Jacinto)", txt);
-        toast("✅ Conteúdo analisado e adicionado ao seu plano!");
-        render();
       });
     }
   }
@@ -669,10 +720,71 @@
     const linkAba = e.target.closest("nav.abas a");
     if (linkAba) {
       e.preventDefault();
+      salvarTextoEditorSeExistir();
       estado.aba = linkAba.getAttribute("data-aba");
       salvarEstado();
       render();
       window.scrollTo({top: 0, behavior: "smooth"});
+      return;
+    }
+
+    const tokenBtn = e.target.closest("[data-inserir-token]");
+    if (tokenBtn) {
+      const token = tokenBtn.getAttribute("data-inserir-token");
+      const ed = document.getElementById("editor-java-prog");
+      if (ed) {
+        const ini = ed.selectionStart || ed.value.length;
+        const fim = ed.selectionEnd || ed.value.length;
+        ed.value = ed.value.slice(0, ini) + token + ed.value.slice(fim);
+        ed.focus();
+        ed.selectionStart = ed.selectionEnd = ini + token.length;
+        salvarTextoEditorSeExistir();
+        salvarEstado();
+      }
+      return;
+    }
+
+    const selProg = e.target.closest("[data-sel-prog]");
+    if (selProg) {
+      salvarTextoEditorSeExistir();
+      estado.desafioProgAtual = parseInt(selProg.getAttribute("data-sel-prog"), 10);
+      salvarEstado();
+      render();
+      return;
+    }
+
+    const testarProg = e.target.closest("[data-testar-prog]");
+    if (testarProg) {
+      validarCodigoDesafio(testarProg.getAttribute("data-testar-prog"));
+      return;
+    }
+
+    const verSolProg = e.target.closest("[data-ver-sol-prog]");
+    if (verSolProg) {
+      salvarTextoEditorSeExistir();
+      const id = verSolProg.getAttribute("data-ver-sol-prog");
+      estado.mostrarSolucaoProg[id] = !estado.mostrarSolucaoProg[id];
+      salvarEstado();
+      render();
+      return;
+    }
+
+    const resetProg = e.target.closest("[data-reset-prog]");
+    if (resetProg) {
+      const id = resetProg.getAttribute("data-reset-prog");
+      delete estado.codigosUsuario[id];
+      delete estado.feedbackProg[id];
+      salvarEstado();
+      render();
+      return;
+    }
+
+    const toggleAp = e.target.closest("[data-toggle-ap]");
+    if (toggleAp) {
+      const id = toggleAp.getAttribute("data-toggle-ap");
+      estado.apostilaAberta[id] = !estado.apostilaAberta[id];
+      salvarEstado();
+      render();
       return;
     }
 
@@ -755,6 +867,7 @@
       estado.filtroTreino = filtroQ.getAttribute("data-filtro-q");
       estado.indiceQuestao = 0;
       estado.respostaSelecionada = null;
+      estado.aba = "treino";
       salvarEstado();
       render();
       return;
@@ -764,9 +877,12 @@
     if (respQ) {
       const idxResp = parseInt(respQ.getAttribute("data-resp-q"), 10);
       const todas = todasQuestoes();
+      const idsErros = Object.keys(estado.erros).filter(k => estado.erros[k]);
       const filtradas = estado.filtroTreino === "todos"
         ? todas
-        : todas.filter(q => q.mod === estado.filtroTreino);
+        : estado.filtroTreino === "erros"
+          ? todas.filter(q => idsErros.includes(q.id))
+          : todas.filter(q => q.mod === estado.filtroTreino);
       const qAtual = filtradas[estado.indiceQuestao];
       estado.respostaSelecionada = idxResp;
 
@@ -787,9 +903,12 @@
     const proxQ = e.target.closest("[data-prox-q]");
     if (proxQ) {
       const todas = todasQuestoes();
+      const idsErros = Object.keys(estado.erros).filter(k => estado.erros[k]);
       const filtradas = estado.filtroTreino === "todos"
         ? todas
-        : todas.filter(q => q.mod === estado.filtroTreino);
+        : estado.filtroTreino === "erros"
+          ? todas.filter(q => idsErros.includes(q.id))
+          : todas.filter(q => q.mod === estado.filtroTreino);
       estado.indiceQuestao = (estado.indiceQuestao + 1) % Math.max(1, filtradas.length);
       estado.respostaSelecionada = null;
       salvarEstado();
@@ -801,36 +920,14 @@
     const antQ = e.target.closest("[data-ant-q]");
     if (antQ) {
       const todas = todasQuestoes();
+      const idsErros = Object.keys(estado.erros).filter(k => estado.erros[k]);
       const filtradas = estado.filtroTreino === "todos"
         ? todas
-        : todas.filter(q => q.mod === estado.filtroTreino);
+        : estado.filtroTreino === "erros"
+          ? todas.filter(q => idsErros.includes(q.id))
+          : todas.filter(q => q.mod === estado.filtroTreino);
       estado.indiceQuestao = (estado.indiceQuestao - 1 + filtradas.length) % Math.max(1, filtradas.length);
       estado.respostaSelecionada = null;
-      salvarEstado();
-      render();
-      return;
-    }
-
-    const refazerErro = e.target.closest("[data-refazer-erro]");
-    if (refazerErro) {
-      const id = refazerErro.getAttribute("data-refazer-erro");
-      const todas = todasQuestoes();
-      const idx = todas.findIndex(q => q.id === id);
-      if (idx >= 0) {
-        estado.filtroTreino = "todos";
-        estado.indiceQuestao = idx;
-        estado.respostaSelecionada = null;
-        estado.aba = "treino";
-        salvarEstado();
-        render();
-      }
-      return;
-    }
-
-    const limparErro = e.target.closest("[data-limpar-erro]");
-    if (limparErro) {
-      const id = limparErro.getAttribute("data-limpar-erro");
-      delete estado.erros[id];
       salvarEstado();
       render();
       return;
